@@ -24,6 +24,10 @@ pub struct Iter<'a, T> {
     next: Option<&'a Node<T>>,
 }
 
+pub struct IterMut<'a, T>{
+    next: Option<&'a mut Node<T>>,
+}
+
 impl<T> List<T>{
     pub fn new() -> Self{
         List { head: None}
@@ -68,6 +72,12 @@ impl<T> List<T>{
             next: self.head.as_deref()
         }
     }
+
+    pub fn iter_mut(&mut self) -> IterMut<'_, T> {
+        IterMut {
+            next: self.head.as_deref_mut()
+        }
+    }
 }
 
 // implement Iterator trait for IntoIter tuple struct
@@ -78,9 +88,10 @@ impl<T> Iterator for IntoIter<T> {
     }
 }
 
+// Iter Borrows/references the List
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
-    fn next(&'a mut self) -> Option<Self::Item> {
+    fn next(&mut self) -> Option<Self::Item> {
         self.next.map(|node| {
             self.next = node.next.as_deref();
             &node.elem
@@ -88,6 +99,18 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
+// IterMut takes Mutable reference
+impl<'a, T> Iterator for IterMut<'a, T>{
+    type Item = &'a mut T;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.next.take().map(|node|{
+            self.next = node.next.as_deref_mut();
+            &mut node.elem
+        })
+    }
+}
+
+// to Drop every item of list
 impl<T: std::fmt::Display> Drop for List<T>{
     fn drop(&mut self) {
        let mut curr_link = self.head.take();
