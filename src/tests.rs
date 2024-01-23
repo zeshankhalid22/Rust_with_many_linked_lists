@@ -26,3 +26,16 @@ fn test_push_pop() {
     // list.push(34);
 
 }
+
+#[test]
+fn iter_mut() {
+    let mut list = List::new();
+    list.push(1);
+    list.push(3);
+    list.push(5);
+
+    let mut iter = list.iter_mut();
+    assert_eq!(iter.next(),Some(&mut 5));
+    assert_eq!(iter.next(),Some(&mut 3));
+    assert_eq!(iter.next(),Some(&mut 1));
+}
