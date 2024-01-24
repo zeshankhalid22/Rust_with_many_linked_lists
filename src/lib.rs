@@ -2,6 +2,7 @@ use crate::an_ok_stack::List;
 
 pub mod an_ok_stack;
 mod tests;
+mod persistent_stack;
 
 fn main() {
     let mut list = List::new();
