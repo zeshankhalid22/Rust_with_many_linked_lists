@@ -16,13 +16,22 @@ impl<T> List<T> {
         List {head: None}
     }
 
-    // push
+    // append at front Node (old list as it's "next" value)
     pub fn append(&self, elem: T) -> List<T> {
         List {
             head: Some(Rc::new(Node {
                 elem,
                 next: self.head.clone(),
             }))
+        }
+    }
+    // remove first element
+    pub fn tail(&self) -> List<T> {
+        List {
+            // and_then takes Option<T>, and return Option<T.some_operation>
+            head: self.head.as_ref().and_then(|node| {
+                node.next.clone()
+            })
         }
     }
 }
