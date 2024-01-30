@@ -1,5 +1,7 @@
-use crate::an_ok_stack::{Iterator, List};
 
+#[cfg(test)]
+mod test{
+    use Rust_with_many_lls::an_ok_stack::*;
 #[test]
 fn test_push_pop() {
     let mut list = List::new();
@@ -24,7 +26,6 @@ fn test_push_pop() {
 
     // * not allowed,  was moved
     // list.push(34);
-
 }
 
 #[test]
@@ -39,3 +40,5 @@ fn iter_mut() {
     assert_eq!(iter.next(),Some(&mut 3));
     assert_eq!(iter.next(),Some(&mut 1));
 }
+}
+
