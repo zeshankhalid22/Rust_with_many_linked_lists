@@ -1,30 +1,22 @@
+use std::fmt::Display;
 use std::rc::Rc;
 
-pub struct List<T> {
+pub struct List<T: Display> {
     head: Link<T>,
 }
 type Link<T> = Option<Rc<Node<T>>>;
-struct Node<T> {
+struct Node<T: Display> {
     elem: T,
     next: Link<T>,
 }
 
 // * Iterator Implementation
-pub struct Iter<'a, T> {
+pub struct Iter<'a, T: Display> {
     next: Option<&'a Node<T>>,
 }
 
-impl<'a, T> Iterator for Iter<'a, T> {
-    type Item = &'a T;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.next.map(|node| {
-            self.next = node.next.as_deref();
-            &node.elem
-        })
-    }
-}
 
-impl<T> List<T> {
+impl<T: Display> List<T> {
     pub fn new() -> Self {
         List {head: None}
     }
@@ -57,3 +49,35 @@ impl<T> List<T> {
     }
 }
 
+impl<'a, T: Display> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        // self.next: Option<&'a Node<T>>
+        // node: Option<Rc<Node<T>>>
+        self.next.map(|node| {
+            // as_deref() converts &Rc<T> to &T
+            self.next = node.next.as_deref();
+            &node.elem
+        })
+    }
+}
+
+impl<T: Display> Drop for List<T> {
+    fn drop(&mut self) {
+       // replace head(of list) with None, and return actual List
+       let mut  curr_node = self.head.take();
+        // run loop as long as curr_node is Some(node)
+        while let Some(node) = curr_node {
+            // if there's only 1 node inside Rc, take ownership unwrap and return
+            if let Ok(mut node) = Rc::try_unwrap(node) {
+                println!("drop {}",node.elem);
+                // moving 1 position forward
+                curr_node = node.next.take();
+            }
+                // if there are > 1 Rc pointers to node, then break
+            else {
+                break;
+            }
+        }
+    }
+}

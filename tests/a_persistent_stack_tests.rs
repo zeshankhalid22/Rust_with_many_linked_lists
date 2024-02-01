@@ -24,5 +24,7 @@ mod test{
         assert_eq!(iter.next(),Some(&10));
         assert_eq!(iter.next(),Some(&5));
 
+        drop(list);
+
     }
 }
