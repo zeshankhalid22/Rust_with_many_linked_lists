@@ -1,7 +1,8 @@
 use std::rc::Rc;   // allow multiple owners, but with immutable access
 use std::cell::RefCell;
 
-pub struct List<T> {
+// TODO impl Iterators
+pub struct List<T: std::fmt::Display> {
     head: Link<T>,
     tail: Link<T>,
 }
@@ -17,7 +18,7 @@ struct Node<T> {
 
 impl<T> Node<T> {
     fn new(elem: T) -> Rc<RefCell<Self>> {
-        /// initialize and return an instance of Node<T> wrapped by RefCell, Rc
+        // initialize and return an instance of Node<T> wrapped by RefCell, Rc
         Rc::new(RefCell::new(Node {
             elem,
             next: None,
@@ -26,7 +27,9 @@ impl<T> Node<T> {
     }
 }
 
-impl<T> List<T> {
+impl<T: std::fmt::Display> List<T> {
+    // TODO peek_front
+
     pub fn new() -> Self {
         List{head:None, tail:None}
     }
@@ -59,13 +62,58 @@ impl<T> List<T> {
                 }
                 None => {
                     // if only one element, emptying list
-                    self.head.take();
+                    self.tail.take();
                 }
             }
             // old_head.into_inner().elem // cannot move out of Rc
             // Rc::try_unwrap moves out the content of Rc if it's RefCount is 1
             Rc::try_unwrap(old_head).ok().unwrap().into_inner().elem
-
         })
+    }
+
+    pub fn push_back(&mut self, elem: T) {
+        let new_tail = Node::new(elem);
+        // replace actual tail with None, and compare against Some(old_tail)
+        // here the actual tail will be separated by list, then will be added at the end later
+        match self.tail.take() {
+            Some(old_tail) => {
+                old_tail.borrow_mut().next = Some(new_tail.clone());
+                new_tail.borrow_mut().prev = Some(old_tail);
+                self.tail = Some(new_tail); // new_tail moved
+            }
+            None => {
+                    self.head = Some(new_tail.clone());
+                    self.tail = Some(new_tail);
+            }
+        }
+    }
+    pub fn pop_back(&mut self) -> Option<T> {
+        // original tail is returned inside map and replaced with None
+        self.tail.take().map(|old_tail| {
+            // match against prev value of old_tail to decide new_tail
+            match old_tail.borrow_mut().prev.take() {
+                Some(new_tail) => {
+                    // set new_tail's next value to None (disconnect from original tail)
+                    new_tail.borrow_mut().next.take();
+                    self.tail = Some(new_tail);
+                }
+                None => {
+                    // emptying list
+                    self.head.take();
+                }
+            }
+            Rc::try_unwrap(old_tail).ok().unwrap().into_inner().elem
+        })
+    }
+
+    // TODO implement peek functions (Ref, RefMut)
+
+}
+
+impl<T: std::fmt::Display> Drop for List<T> {
+    fn drop(&mut self) {
+        while let Some(val) = self.pop_front() {
+            println!("drop {}", val);
+        }
     }
 }
